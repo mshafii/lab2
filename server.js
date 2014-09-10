@@ -1,6 +1,36 @@
 var express = require('express');
+
+//add sessions
+var session = require('express-session');
+
 var app = express();
-//angie comment
+
+//add sessions
+
+app.use(session({
+	//genid: function(req) {
+	//	return genuuid(); //use UUIDs for session IDs
+	//},	
+	secret: 'eecs581',
+	saveUninitialized: true,
+                 resave: true
+}));
+
+/*app.use(function(req, res, next) {
+  var sess = req.session
+  if (sess.views) {
+    sess.views++
+    res.setHeader('Content-Type', 'text/html')
+    res.write('<p>views: ' + sess.views + '</p>')
+    res.write('<p>expires in: ' + (sess.cookie.maxAge / 1000) + 's</p>')
+    res.end()
+  } else {
+    sess.views = 1
+    res.end('welcome to the session demo. refresh!')
+  }
+})*/
+
+
 app.get('/', function(req, res){
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
@@ -45,6 +75,7 @@ app.delete('/:id/:item', function(req, res){
 			campus[i].what.splice(ix, 1); // room no longer has this
 			return;
 		    }
+
 		    res.status(200);
 		    res.send([]);
 		    return;
@@ -53,6 +84,7 @@ app.delete('/:id/:item', function(req, res){
 	res.status(404);
 	res.send("location not found");
 });
+
 
 app.put('/:id/:item', function(req, res){
 	for (var i in campus) {
