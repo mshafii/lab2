@@ -1,37 +1,61 @@
 var express = require('express');
 
 //add sessions
-var session = require('express-session');
+//var session = require('express-session');
 
 var app = express();
 
 //add sessions
 
-app.use(session({
+//var sess;
+
+/*app.use(session({
 	//genid: function(req) {
 	//	return genuuid(); //use UUIDs for session IDs
 	//},	
 	secret: 'eecs581',
 	saveUninitialized: true,
                  resave: true
-}));
+}));*/
 
-/*app.use(function(req, res, next) {
-  var sess = req.session
-  if (sess.views) {
-    sess.views++
-    res.setHeader('Content-Type', 'text/html')
-    res.write('<p>views: ' + sess.views + '</p>')
-    res.write('<p>expires in: ' + (sess.cookie.maxAge / 1000) + 's</p>')
-    res.end()
-  } else {
-    sess.views = 1
-    res.end('welcome to the session demo. refresh!')
-  }
-})*/
 
+// from www.w3schools.com/js/js_cookies 
+function setCookie(cname, cvalue, exdays) {
+    var d = new Date();
+    d.setTime(d.getTime() + (exdays*24*60*60*1000));
+    var expires = "expires="+d.toUTCString();
+    document.cookie = cname + "=" + cvalue + "; " + expires;
+}
+
+// from www.w3schools.com/js/js_cookies 
+function getCookie(cname) {
+    var name = cname + "=";
+    var ca = document.cookie.split(';');
+    for(var i=0; i<ca.length; i++) {
+        var c = ca[i];
+        while (c.charAt(0)==' ') c = c.substring(1);
+        if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
+    }
+    return "";
+}
+
+// from www.w3schools.com/js/js_cookies 
+function checkCookie() {
+    var user2 = getCookie("username");
+    if (user2 != "") {
+        alert("Welcome again " + user);
+    } else {
+        user2 = prompt("Please enter your name:", "");
+        if (user2 != "" && user2 != null) {
+            setCookie("username", user2, 365);
+        }
+    }
+}
 
 app.get('/', function(req, res){
+	var user = prompt("Please enter your name:", "");
+	setCookie("username", user, 1);
+	checkCookie();
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
 });
@@ -114,6 +138,7 @@ var dropbox = function(ix,room) {
 	inventory.splice(ix, 1);	 // remove from inventory
 	if (room.id == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
+		//room.text   += " session views: " + sess.views;
 		return;
 	}
 	if (room.what == undefined) {
