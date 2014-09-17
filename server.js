@@ -5,20 +5,23 @@ var cookieParser = require('cookie-parser')
 
 var app = express();
 
+var id;
+
 //add sessions
 app.use(cookieParser());
 
-/*app.use(session({
-	//genid: function(req) {
-	//	return genuuid(); //use UUIDs for session IDs
-	//},	
-	secret: 'eecs581',
-	saveUninitialized: true,
-                 resave: true
-}));*/
+function createCookie(req, res){
+	id = req.cookies.userid;
 
+	if(!id)
+	{
+		id = Math.random()*1000000;
+	}
+}
 
 app.get('/', function(req, res){
+	createCookie(req, res);
+	console.log("Cookies: ", id)
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
 });
@@ -83,7 +86,10 @@ app.put('/:id/:item', function(req, res){
 					res.set({'Content-Type': 'application/json'});
 					res.status(200);
 					res.send([]);
-				} else {
+				} else {app.post('/', function(req, res){
+  req.session.userName = req.body.userName;
+  res.redirect('/');
+});
 					res.status(404);
 					res.send("you do not have this");
 				}
@@ -101,7 +107,6 @@ var dropbox = function(ix,room) {
 	inventory.splice(ix, 1);	 // remove from inventory
 	if (room.id == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
-		//room.text   += " session views: " + sess.views;
 		return;
 	}
 	if (room.what == undefined) {
