@@ -1,13 +1,12 @@
 var express = require('express');
 
 //add sessions
-//var session = require('express-session');
+var cookieParser = require('cookie-parser')
 
 var app = express();
 
 //add sessions
-
-//var sess;
+app.use(cookieParser());
 
 /*app.use(session({
 	//genid: function(req) {
@@ -19,43 +18,7 @@ var app = express();
 }));*/
 
 
-// from www.w3schools.com/js/js_cookies 
-function setCookie(cname, cvalue, exdays) {
-    var d = new Date();
-    d.setTime(d.getTime() + (exdays*24*60*60*1000));
-    var expires = "expires="+d.toUTCString();
-    document.cookie = cname + "=" + cvalue + "; " + expires;
-}
-
-// from www.w3schools.com/js/js_cookies 
-function getCookie(cname) {
-    var name = cname + "=";
-    var ca = document.cookie.split(';');
-    for(var i=0; i<ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0)==' ') c = c.substring(1);
-        if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
-    }
-    return "";
-}
-
-// from www.w3schools.com/js/js_cookies 
-function checkCookie() {
-    var user2 = getCookie("username");
-    if (user2 != "") {
-        alert("Welcome again " + user);
-    } else {
-        user2 = prompt("Please enter your name:", "");
-        if (user2 != "" && user2 != null) {
-            setCookie("username", user2, 365);
-        }
-    }
-}
-
 app.get('/', function(req, res){
-	var user = prompt("Please enter your name:", "");
-	setCookie("username", user, 1);
-	checkCookie();
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
 });
