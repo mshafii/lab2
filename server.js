@@ -1,22 +1,15 @@
 var express = require('express');
-
-//add cookies
 var cookieParser = require('cookie-parser')
-
 var app = express();
+var who, inventory;
 
-var who = [];
-
-var inventory;
-
-//add cookies
 app.use(cookieParser());
 
 function setCookie(req, res){
 
 	if (!req.cookies.userid) {
 	
-		req.cookies.userid = (Math.round(Math.random()*1000000)).toString();
+		req.cookies.userid = Math.round(Math.random()*1000000);
 		
 	}
 	
@@ -26,7 +19,7 @@ function setCookie(req, res){
 		
 	} else {
 	
-		who = [who +  ", " + req.cookies.userid];
+		who.push(req.cookies.userid);
 	}
 }
 
@@ -34,8 +27,9 @@ app.get('/', function(req, res){
 	setCookie(req, res);
 	inventory = ["laptop"];
 	
-	//console.log("Who: ", who);
-	//console.log("Inventory: ", inventory);
+	//added terminal print statements to better understand what's going on
+	console.log("Who: ", who);
+	console.log("Inventory: ", inventory);
 	
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");

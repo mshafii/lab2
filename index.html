@@ -68,9 +68,7 @@
                 (function(button,where,item) {
                   button.click(function() {
                     $.ajax("/" + where + "/" + item,
-                        { success : refresh
-                        , type : "PUT"
-                        }
+                        { success : refresh, type : "PUT" }
                     );
                     refresh();
                   });
@@ -87,7 +85,7 @@
 		    $("#who").html("Online User IDs: ");
 			for(var i in data) {
 			  var person = data[i];
-			  $("#who").append(person);
+			  $("#who").append(person + " ");
 			}
 		  }
 		});
