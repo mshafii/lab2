@@ -1,5 +1,6 @@
 <html>
   <body>
+  <font size=4><div id="who"></div></font>
   <font size=4><div id="where"></div></font>
   <img id="picture" src="">
   <font size=3><div id="what"></div></font>
@@ -78,6 +79,19 @@
             }
           }
         });
+		////////////////added
+		$.get("/who",function (data) {
+		  if (data == undefined || data.length == 0) {
+		    $("#who").html("Cookie Error");
+		  } else {
+		    $("#who").html("Online User IDs: ");
+			for(var i in data) {
+			  var person = data[i];
+			  $("#who").append(person);
+			}
+		  }
+		});
+		///////////////
       }
 
       refresh();

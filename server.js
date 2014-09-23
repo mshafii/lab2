@@ -1,27 +1,42 @@
 var express = require('express');
 
-//add sessions
+//add cookies
 var cookieParser = require('cookie-parser')
 
 var app = express();
 
-var id;
+var who = [];
 
-//add sessions
+var inventory;
+
+//add cookies
 app.use(cookieParser());
 
-function createCookie(req, res){
-	id = req.cookies.userid;
+function setCookie(req, res){
 
-	if(!id)
-	{
-		id = Math.random()*1000000;
+	if (!req.cookies.userid) {
+	
+		req.cookies.userid = (Math.round(Math.random()*1000000)).toString();
+		
+	}
+	
+	if (who == "" || who == null){
+	
+		who = [req.cookies.userid];
+		
+	} else {
+	
+		who = [who +  ", " + req.cookies.userid];
 	}
 }
 
 app.get('/', function(req, res){
-	createCookie(req, res);
-	console.log("Cookies: ", id)
+	setCookie(req, res);
+	inventory = ["laptop"];
+	
+	//console.log("Who: ", who);
+	//console.log("Inventory: ", inventory);
+	
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
 });
@@ -32,6 +47,12 @@ app.get('/:id', function(req, res){
 	    res.status(200);
 	    res.send(inventory);
 	    return;
+	}
+	if (req.params.id == "who") {
+		res.set({'Content-Type': 'application/json'});
+		res.status(200);
+		res.send(who);
+		return;
 	}
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
@@ -75,8 +96,7 @@ app.delete('/:id/:item', function(req, res){
 	res.send("location not found");
 });
 
-
-app.put('/:id/:item', function(req, res){
+app.put('/:id/:item/', function(req, res){
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 				// Check you have this
@@ -115,8 +135,6 @@ var dropbox = function(ix,room) {
 	room.what.push(item);
 }
 
-var inventory = ["laptop"];
-
 var campus =
     [ { "id": "lied-center",
 	"where": "LiedCenter.jpg",
@@ -142,7 +160,7 @@ var campus =
 	"where": "StrongHall.jpg",
 	"next": {"east": "outside-fraser", "north": "memorial-stadium", "west": "snow-hall"},
 	"what": ["coffee"],
-	"text": "You are outside Stong Hall."
+	"text": "You are outside Strong Hall."
       },
       { "id": "ambler-recreation",
 	"where": "AmblerRecreation.jpg",
@@ -150,7 +168,7 @@ var campus =
 	"text": "It's the starting of the semester, and you feel motivated to be at the Gym. Let's see about that in 3 weeks."
       },
       { "id": "outside-fraser",
-  "where": "OutsideFraserHall.jpg",
+    "where": "OutsideFraserHall.jpg",
 	"next": {"west": "strong-hall","north":"spencer-museum"},
 	"what": ["basketball"],
 	"text": "On your walk to the Kansas Union, you wish you had class outside."
