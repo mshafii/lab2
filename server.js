@@ -1,35 +1,40 @@
 var express = require('express');
 var cookieParser = require('cookie-parser')
 var app = express();
-var who, inventory;
+var who = [];
+var inventory;
 
 app.use(cookieParser());
 
-function setCookie(req, res){
+function setCookie(req, res, next){
 
-	if (!req.cookies.userid) {
+	req.userid = req.cookies.userid;
 	
-		req.cookies.userid = Math.round(Math.random()*1000000);
-		
+	if (!req.userid) {
+		while ( (!req.userid) || (who[req.userid]) ){
+			req.userid = Math.round(Math.random()*1000000);
+		}
+		res.cookie("userid", req.userid);		
 	}
 	
-	if (who == "" || who == null){
-	
-		who = [req.cookies.userid];
-		
-	} else {
-	
-		who.push(req.cookies.userid);
+	if (!who[req.userid]){
+		who[req.userid] = {
+			"location": "strong-hall",
+			"inventory": ["laptop"]
+		};
 	}
+	req.who = who[req.userid];
+	inventory = req.who.inventory;
+	next();
 }
 
+app.use(setCookie);
+
 app.get('/', function(req, res){
-	setCookie(req, res);
-	inventory = ["laptop"];
+	//inventory = ["laptop"];
 	
-	//added terminal print statements to better understand what's going on
-	console.log("Who: ", who);
-	console.log("Inventory: ", inventory);
+	//added terminal print statement to better understand what's going on
+	console.log("Who: ", req.who);
 	
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
@@ -39,7 +44,7 @@ app.get('/:id', function(req, res){
 	if (req.params.id == "inventory") {
 	    res.set({'Content-Type': 'application/json'});
 	    res.status(200);
-	    res.send(inventory);
+	    res.send(req.who.inventory);
 	    return;
 	}
 	if (req.params.id == "who") {
@@ -71,14 +76,20 @@ app.delete('/:id/:item', function(req, res){
 		    res.set({'Content-Type': 'application/json'});
 		    var ix = -1;
 		    if (campus[i].what != undefined) {
-					ix = campus[i].what.indexOf(req.params.item);
+				ix = campus[i].what.indexOf(req.params.item);
 		    }
 		    if (ix >= 0) {
-		       res.status(200);
-			inventory.push(campus[i].what[ix]); // stash
-		        res.send(inventory);
-			campus[i].what.splice(ix, 1); // room no longer has this
-			return;
+				res.status(200);
+				
+				req.who.inventory.push(campus[i].what[ix]); // stash in specific user's inventory
+				inventory = req.who.inventory;
+		        res.send(req.who.inventory); // respond with specific user's inventory
+				
+				campus[i].what.splice(ix, 1); // room no longer has this
+
+				console.log("Who: ", req.who);
+
+				return;
 		    }
 
 		    res.status(200);
@@ -93,20 +104,27 @@ app.delete('/:id/:item', function(req, res){
 app.put('/:id/:item/', function(req, res){
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
-				// Check you have this
-				var ix = inventory.indexOf(req.params.item)
+		
+				// Check that specific user has this
+				var ix = req.who.inventory.indexOf(req.params.item)
+				
 				if (ix >= 0) {
-					dropbox(ix,campus[i]);
+				
+					//add req as parameter to dropbox()
+					dropbox(ix,campus[i],req);
+					
 					res.set({'Content-Type': 'application/json'});
 					res.status(200);
 					res.send([]);
 				} else {app.post('/', function(req, res){
-  req.session.userName = req.body.userName;
-  res.redirect('/');
-});
+							req.session.userName = req.body.userName;
+							res.redirect('/');
+						});
 					res.status(404);
 					res.send("you do not have this");
 				}
+				
+				console.log("Who: ", req.who);
 				return;
 		}
 	}
@@ -116,9 +134,10 @@ app.put('/:id/:item/', function(req, res){
 
 app.listen(3000);
 
-var dropbox = function(ix,room) {
-	var item = inventory[ix];
-	inventory.splice(ix, 1);	 // remove from inventory
+var dropbox = function(ix,room,req) {
+	var item = req.who.inventory[ix];    // take note of what item to remove is
+	req.who.inventory.splice(ix, 1);	 // remove from specific user's inventory
+	inventory = req.who.inventory;
 	if (room.id == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
 		return;
