@@ -11,16 +11,21 @@
   <script>
     $(function() {
       $("#where").html("booting...");
-	var where = "";
-      //where = "strong-hall";
+	//var where;
+      where = "strong-hall";
 
       function refresh() {
+	/*if(!where){
 		$.get("/init", function (data) {
 			window.name = data.id;
 		});
 		$("#test").html(window.name);
 		where = window.name;
-		temp = "x";
+	/*}else{
+		$.get("/" + where + "/update", function (data) {
+			$("#test2").html("2 " + data);
+		});
+	}*/
         $.get("/" + where, function (data) {
            $("#where").html(data.text);
            $("#picture").attr("src","images/" + data.where);

@@ -7,7 +7,7 @@ var myID;
 
 app.use(cookieParser());
 
-	var mysql = require('mysql');
+	/*var mysql = require('mysql');
 	var connection = mysql.createConnection({
 		  host     : 'mysql.eecs.ku.edu',
 		  user     : 'csoden42',
@@ -27,23 +27,23 @@ app.use(cookieParser());
 	  if (err) throw err;
 
 	  console.log('The solution is: ', rows[0].solution);
-	});
+	});*/
 
 function setCookie(req, res, next){
 
 	req.userid = req.cookies.userid;
 	console.log("req.userid set");
 	if (!req.userid) {
-		
+		console.log("cookie test");
 		while ( (!req.userid) || (who[req.userid]) ){
 			req.userid = Math.round(Math.random()*1000000);
 		}
 		res.cookie("userid", req.userid);		
-		var queryString = 'INSERT INTO EECS_561_Lab4 (`ID`, `Inventory`) VALUES (' + req.userid + ', "")';
+		/*var queryString = 'INSERT INTO EECS_561_Lab4 (`ID`, `Inventory`) VALUES (' + req.userid + ', "")';
 		connection.query(queryString, function (err, rows, fields){
 			if(err) throw err;
 			console.log("New User inserted");
-		});
+		});*/
 	}
 	//else throw req.userid;
 	
@@ -56,12 +56,12 @@ function setCookie(req, res, next){
 	req.who = who[req.userid];
 	inventory = req.who.inventory;
 	var local = req.who.location;
-	var updateString = 'UPDATE EECS_561_Lab4 SET `Inventory`= "{(' + inventory + ')}" WHERE ID=' + req.userid;
+	/*var updateString = 'UPDATE EECS_561_Lab4 SET `Inventory`= "{(' + inventory + ')}" WHERE ID=' + req.userid;
 	connection.query(updateString, function (err, rows, fields){
 			if(err) throw err;
 			console.log("inventory updated");
 		});
-		myID = req.userid;
+		myID = req.userid;*/
 	next();
 	//connection.end();
 }
@@ -94,7 +94,8 @@ app.get('/', function(req, res){
 	return;
 });*/
 
-app.get('/:id/update', function(req, res){
+/*app.get('/:id/update', function(req, res){
+	console.log("update test");
 	var counter = 0;
 	var i;
 	while(counter < 10){
@@ -114,10 +115,12 @@ app.get('/:id/update', function(req, res){
 		res.status(200);
 		res.send("success");
 		return;
-});
+});*/
 
 app.get('/:id', function(req, res){
-	if (req.params.id == "init") {
+	/*if (req.params.id == "init") {
+		console.log("init test");
+
 		var result;
 		var selectString = 'SELECT * FROM `EECS_561_Lab4` WHERE `ID` = ' + req.cookies.userid;
 		connection.query(selectString, function (err, rows, fields){
@@ -132,11 +135,11 @@ app.get('/:id', function(req, res){
 			return;
 		});
 	}
-	else if (req.params.id == "inventory") {
+	else */if (req.params.id == "inventory") {
 	    res.set({'Content-Type': 'application/json'});
 	    res.status(200);
 	    res.send(req.who.inventory);
-	    console.log("invenotry requested");
+	    console.log("inventory requested");
 	    return;
 	}
 	else if (req.params.id == "who") {
@@ -147,12 +150,13 @@ app.get('/:id', function(req, res){
 		return;
 	}else{
 	for (var i in campus) {
+		console.log(req.params.id);
 		if (req.params.id == campus[i].id) {
-		    var updateString = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
+		   /* var updateString = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
 			console.log("user updated #2 with location " + i);
 		connection.query(updateString, function (err, rows, fields){
 			if(err) throw err;
-		});
+		});*/
 		res.set({'Content-Type': 'application/json'});
 		    res.status(200);
 		    res.send(campus[i]);
@@ -240,7 +244,7 @@ var dropbox = function(ix,room,req) {
 	var item = req.who.inventory[ix];    // take note of what item to remove is
 	req.who.inventory.splice(ix, 1);	 // remove from specific user's inventory
 	inventory = req.who.inventory;
-	if (room.id == 'allen-fieldhouse' && item == "basketball") {
+	if (room.nid == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
 		return;
 	}
