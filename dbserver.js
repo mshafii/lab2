@@ -3,6 +3,7 @@ var cookieParser = require('cookie-parser')
 var app = express();
 var who = [];
 var inventory;
+var myID;
 
 app.use(cookieParser());
 
@@ -21,27 +22,30 @@ app.use(cookieParser());
 
   console.log('connected as id ' + connection.threadId);
 });
-
+	connection.query("use csoden42");
 	connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
 	  if (err) throw err;
 
 	  console.log('The solution is: ', rows[0].solution);
 	});
 
-	connection.end();
-
 function setCookie(req, res, next){
 
 	req.userid = req.cookies.userid;
-	
+	console.log("req.userid set");
 	if (!req.userid) {
+		
 		while ( (!req.userid) || (who[req.userid]) ){
-			connection.query('SELECT ID FROM EECS_561_Lab4 AS user_id WHERE ', function (err, rows, fields){
-	if(err) throw err;
-	req.userid = rows[0].user_id;
+			req.userid = Math.round(Math.random()*1000000);
 		}
 		res.cookie("userid", req.userid);		
+		var queryString = 'INSERT INTO EECS_561_Lab4 (`ID`, `Inventory`) VALUES (' + req.userid + ', "")';
+		connection.query(queryString, function (err, rows, fields){
+			if(err) throw err;
+			console.log("New User inserted");
+		});
 	}
+	//else throw req.userid;
 	
 	if (!who[req.userid]){
 		who[req.userid] = {
@@ -51,7 +55,15 @@ function setCookie(req, res, next){
 	}
 	req.who = who[req.userid];
 	inventory = req.who.inventory;
+	var local = req.who.location;
+	var updateString = 'UPDATE EECS_561_Lab4 SET `Inventory`= "{(' + inventory + ')}" WHERE ID=' + req.userid;
+	connection.query(updateString, function (err, rows, fields){
+			if(err) throw err;
+			console.log("inventory updated");
+		});
+		myID = req.userid;
 	next();
+	//connection.end();
 }
 
 app.use(setCookie);
@@ -66,22 +78,82 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname + "/index.html");
 });
 
+/*app.get('/init', function(req, res){
+	var result = 0;
+	var selectString = 'SELECT * FROM `EECS_561_Lab4` WHERE `ID` = ' + req.cookies.userid;
+	connection.query(selectString, function (err, rows, fields){
+		if(err) throw err;
+		for (var i in rows) {
+			result = rows[i].Location;
+		}
+		console.log("init: ", campus[result]);
+	});
+	res.set({'Content-Type': 'application/json'});
+	res.status(200);
+	res.send(campus[result]);
+	return;
+});*/
+
+app.get('/:id/update', function(req, res){
+	var counter = 0;
+	var i;
+	while(counter < 10){
+		if(campus[counter].id == req.params.id){
+			i = counter;
+			counter = 20;
+		}
+		else counter++;
+	}
+	console.log("update " + counter + " " + req.params.id);
+	 var updateString2 = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
+		connection.query(updateString2, function (err, rows, fields){
+			if(err) throw err;
+			console.log("Update to user with location " + i);
+		});
+		res.set({'Content-Type': 'application/json'});
+		res.status(200);
+		res.send("success");
+		return;
+});
+
 app.get('/:id', function(req, res){
-	if (req.params.id == "inventory") {
+	if (req.params.id == "init") {
+		var result;
+		var selectString = 'SELECT * FROM `EECS_561_Lab4` WHERE `ID` = ' + req.cookies.userid;
+		connection.query(selectString, function (err, rows, fields){
+			if(err) throw err;
+			for (var i in rows) {
+				result = rows[i].Location;
+			}
+			console.log("init: ", campus[result]);
+			res.set({'Content-Type': 'application/json'});
+			res.status(200);
+			res.send(campus[result]);
+			return;
+		});
+	}
+	else if (req.params.id == "inventory") {
 	    res.set({'Content-Type': 'application/json'});
 	    res.status(200);
 	    res.send(req.who.inventory);
+	    console.log("invenotry requested");
 	    return;
 	}
-	if (req.params.id == "who") {
+	else if (req.params.id == "who") {
 		res.set({'Content-Type': 'application/json'});
 		res.status(200);
 		res.send(who);
+		console.log("who requested");
 		return;
-	}
+	}else{
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
-		    res.set({'Content-Type': 'application/json'});
+		    var updateString = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
+			console.log("user updated #2 with location " + i);
+		connection.query(updateString, function (err, rows, fields){
+			if(err) throw err;
+		});
+		res.set({'Content-Type': 'application/json'});
 		    res.status(200);
 		    res.send(campus[i]);
 		    return;
@@ -89,14 +161,17 @@ app.get('/:id', function(req, res){
 	}
 	res.status(404);
 	res.send("not found, sorry");
+	}
 });
 
 app.get('/images/:name', function(req, res){
 	res.status(200);
 	res.sendFile(__dirname + "/" + req.params.name);
+	console.log("image requested");
 });
 
 app.delete('/:id/:item', function(req, res){
+	console.log("item deleted");
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 		    res.set({'Content-Type': 'application/json'});
@@ -128,6 +203,7 @@ app.delete('/:id/:item', function(req, res){
 });
 
 app.put('/:id/:item/', function(req, res){
+	console.log("item requested");
 	for (var i in campus) {
 		if (req.params.id == campus[i].id) {
 		
