@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>581-Login</title>	
+  <link rel="stylesheet" type="text/css" href="style.css" title="style">
+	  <style>
+	  #page_container{width:100%;margin:0 auto;padding:5px;background-color:black;}
+	  
+	    #left_column
+		{
+		width:20%;
+		color:white;
+		height:450px;
+		background-color:blue;
+		text-align:center;
+		font-weight:bolder;
+		font-size:large;
+		float:left;
+		}
+		
+		#center_column
+		{
+		width:80%;
+		color:White;
+		height:450px;
+		background-color:black;
+		text-align:left;
+		font-size:large;
+		float:left;
+		text-align:center;
+		}
+		#center_column2
+		{
+		width:80%;
+		color:White;
+		height:450px;
+		background-color:black;
+		text-align:left;
+		font-size: large;
+		float:left;
+		text-align:center;
+		}
+		#header1
+		{
+		width:100%;
+		padding:5px;
+		color:White;
+		background-color:red;
+		text-align:center;
+		margin-left:auto;
+		font-size:large;
+		}
+		#header2
+		{
+		width:100%;
+		padding:5px;
+		color:White;
+		background-color:black;
+		text-align:left;
+		margin-left:auto;
+		font-size:large;
+		}
+		#footer{clear:both;background:#999;}
+		a:link {color:#FF0000;}      /* unvisited link */
+		a:visited {color:#66CDAA;}  /* visited link */
+		a:hover {color:#0000FF;}  /* mouse over link */
+		a:active {color:#0000FF;}  /* selected link */ 
+	</style>
+ </head>
+ 
+ <body background="BGpic.jpg">
+  
+    <div id="header1">
+		<h1> 
+			TheGame: Login <br>
+		</h1>
+	</div>
+	<div id="header2">
+		Logged in as: <p id="uName"></p>
+	</div>
+	 <div id="page_container">
+		<div id="left_column">
+			<ul>
+						<li><a href="http://localhost:3000">Go To Game</a></
+						<br><br><br><br><br><br><br><br>
+			</ul>
+		</div>
+    <div id="center_column">
+			<br>
+			Your UserName: 
+			<br>
+			<input type="text" id="uNameText" value="Username">
+			<br>
+			<br>
+			<button onclick="createUser()">Submit</button>
+			<br>
+			<input type="checkbox" name="Reset World" onchange="resetWorld()">
+				-Reset World
+	</div>
+    <div id="right_column"></div>
+    <div id="footer"></div>
+  </div>
+</body>
+</html>
+
+<script>
+
+	var userName = "Guest";
+	document.getElementById("uName").innerHTML = userName;
+	
+	function createUser()
+	{	
+		var userName = document.getElementById("uNameText").value;
+		document.cookie='IDCOOKIE='+ Math.floor(Math.random()*1000000);
+		document.getElementById("uName").innerHTML = userName;
+		document.cookie='UNCOOKIE='+userName;
+	}
+	function resetWorld()
+	{
+		document.cookie='WRCOOKIE='+'1';
+	}
+	
+</script>

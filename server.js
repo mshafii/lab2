@@ -4,63 +4,133 @@ var app = express();
 var who = [];
 var inventory;
 
+var mysql = require('mysql');
+var connection = mysql.createConnection({
+	host :'mysql.eecs.ku.edu',
+	user :'hcarothe',
+	password : 'Gn0ao5xZ',
+	database : 'hcarothe'
+	});
+	
+	connection.connect();
+
+
 app.use(cookieParser());
 
-	var mysql = require('mysql');
-	var connection = mysql.createConnection({
-		  host     : 'mysql.eecs.ku.edu',
-		  user     : 'csoden42',
-		  password : '#1Jayhawk'
-		});
-
-	connection.connect(function(err) {
-  if (err) {
-    console.error('error connecting: ' + err.stack);
-    return;
-  }
-
-  console.log('connected as id ' + connection.threadId);
-});
-
-	connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
-	  if (err) throw err;
-
-	  console.log('The solution is: ', rows[0].solution);
-	});
-
-	connection.end();
-
 function setCookie(req, res, next){
+	var inven = [];
 
-	req.userid = req.cookies.userid;
+	req.userName = req.cookies.UNCOOKIE;
+	req.userid = req.cookies.IDCOOKIE;
 	
-	if (!req.userid) {
-		while ( (!req.userid) || (who[req.userid]) ){
-			req.userid = Math.round(Math.random()*1000000);
-		}
-		res.cookie("userid", req.userid);		
-	}
-	
-	if (!who[req.userid]){
+	if (!who[req.userid])
+	{
+
+		inven = loadFromDataBase(req,res,next);
+		
 		who[req.userid] = {
 			"location": "strong-hall",
-			"inventory": ["laptop"]
+			"inventory": inven
 		};
 	}
+	else
+	{
+		console.log(inventory);
+		saveToDataBase(req,res,next);	
+		fs.writeFile('state.txt', JSON.stringify(campus), function (err) {
+	  if (err) throw err;
+});
+	}
+	
 	req.who = who[req.userid];
 	inventory = req.who.inventory;
 	next();
 }
-
+function saveToDataBase(req,res,next)
+{
+	req.userName = req.cookies.UNCOOKIE;
+	req.userid = req.cookies.IDCOOKIE;
+	req.who = who[req.userid];
+	inventory = req.who.inventory;
+		
+	connection.query('UPDATE login SET uName= \''+req.userName+'\', uInventory= \''+inventory+'\' WHERE uName=\''+req.userName+'\'',function(err,result){}); 
+	
+}
+function createUser(req, res, next)
+{
+		req.userName = req.cookies.UNCOOKIE;
+		//console.log("User Doesn't Exist");
+		connection.query('INSERT INTO login(uName, uInventory,location) VALUES(\''+req.userName+'\',\'laptop\',\'strong-hall\')',function	(err,result){});
+}
+function loadFromDataBase(req, res, next)
+{
+		req.userName = req.cookies.UNCOOKIE;
+		var inven = [];
+		
+		var query = connection.query('SELECT uInventory FROM login where uName = \''+req.userName+'\'', 	 
+		function(err, result) 
+		{	
+			if(result.length == 0)//new user
+			{
+				createUser(req, res, next);
+				inven[0] = 'laptop';
+				return inven;
+			}
+			else//existing user
+			{
+				var str = '';
+				for (var p in result[0]) {
+					if (result[0].hasOwnProperty(p)) {
+						str += p + '::' + result[0][p] + '\n';
+					}
+				}
+				var str2 = '';
+				var i = 12;
+				while(i < str.length-1)
+				{
+					str2 += str[i];
+					i++;
+				}
+				i = 0;var j = 0;var str3 = '';//console.log("stuff2", str2);
+				while(i <str2.length)
+				{	
+					if(str2[i] == ',')
+					{
+						//console.log(str3);
+						inven[j] = str3;//console.log("stuff", str3);
+						str3 = '';
+						j++;
+					}
+					else
+					{
+						if(str2[i] != ' ' && str2[i] != ',')
+						{
+							str3 += str2[i];
+						}
+					}
+					i++;
+				}
+				inven[j] = str3;
+			} 
+		});
+		return inven;
+}
 app.use(setCookie);
 
+
+app.get('/login.html', function(req, res) {
+	
+	res.status(200);
+	res.sendFile(__dirname + "/login.html");
+});
 app.get('/', function(req, res){
 	//inventory = ["laptop"];
 	
 	//added terminal print statement to better understand what's going on
-	console.log("Who: ", req.who);
+	//console.log("Who: ", req.who);
 	
 	res.status(200);
+	resetWorld(req,res);
 	res.sendFile(__dirname + "/index.html");
 });
 
@@ -82,6 +152,10 @@ app.get('/:id', function(req, res){
 		    res.set({'Content-Type': 'application/json'});
 		    res.status(200);
 		    res.send(campus[i]);
+		    
+		    req.userName = req.cookies.UNCOOKIE;console.log(req.userName,"-",campus[i].id);
+		    connection.query('UPDATE login SET uName= \''+req.userName+'\', location= \''+campus[i].id+'\'WHERE uName=\''+req.userName+'\'',function(err,result){}); 
+		    
 		    return;
 		}
 	}
@@ -111,7 +185,7 @@ app.delete('/:id/:item', function(req, res){
 				
 				campus[i].what.splice(ix, 1); // room no longer has this
 
-				console.log("Who: ", req.who);
+				//console.log("Who: ", req.who);
 
 				return;
 		    }
@@ -148,7 +222,7 @@ app.put('/:id/:item/', function(req, res){
 					res.send("you do not have this");
 				}
 				
-				console.log("Who: ", req.who);
+				//console.log("Who: ", req.who);
 				return;
 		}
 	}
@@ -172,8 +246,42 @@ var dropbox = function(ix,room,req) {
 	room.what.push(item);
 }
 
-var campus =
-    [ { "id": "lied-center",
+////////////////////
+	var fs = require("fs");
+	var campus;
+	
+	var fileName = "state.txt";
+	function resetWorld(req,res)
+	{
+		var reset = req.cookies.WRCOOKIE;
+		
+		if(reset == 1)
+		{
+			fileName = "worldReset.txt";
+			fs.readFile(fileName, 'utf8',function (err,data) {	
+			  if (err) {
+				return console.log(err);
+			  }
+			  //console.log(data);
+			  campus = JSON.parse(data);
+			});
+				}
+	}
+	fs.readFile(fileName, 'utf8',function (err,data) {	
+	  if (err) {
+		return console.log(err);
+	  }
+	  //console.log(data);
+	  campus = JSON.parse(data);
+	});
+	
+	
+		 
+	////////////////
+
+
+//console.log(campus);
+    /*[ { "id": "lied-center",
 	"where": "LiedCenter.jpg",
 	"next": {"east": "eaton-hall", "south": "dole-institute"},
 	"text": "You are outside the Lied Center."
@@ -227,4 +335,4 @@ var campus =
 	"next": {"north": "eaton-hall","east": "ambler-recreation","west": "dole-institute"},
 	"text": "Rock Chalk! You're at the field house."
       }
-    ]
+    ]*/

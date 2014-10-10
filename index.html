@@ -5,27 +5,13 @@
   <font size=3><div id="what"></div></font>
   <font size=3><div id="inventory"></div></font>
   <font size=3><div id="next"></div></font>
-  <font size=3><div id="test"></div></font>
-<font size=3><div id="test2"></div></font>
   <script src="http://code.jquery.com/jquery-1.10.2.min.js"></script>
   <script>
     $(function() {
       $("#where").html("booting...");
-	//var where;
-      where = "strong-hall";
+      where =  "strong-hall";
 
       function refresh() {
-	/*if(!where){
-		$.get("/init", function (data) {
-			window.name = data.id;
-		});
-		$("#test").html(window.name);
-		where = window.name;
-	/*}else{
-		$.get("/" + where + "/update", function (data) {
-			$("#test2").html("2 " + data);
-		});
-	}*/
         $.get("/" + where, function (data) {
            $("#where").html(data.text);
            $("#picture").attr("src","images/" + data.where);
@@ -68,18 +54,25 @@
 
 
         });
-        $.get("/inventory",function (data) {
-          if (data == undefined || data.length == 0) {
+        $.get("/inventory",function (data) 
+        {
+          if (data == undefined || data.length == 0) 
+          {
              $("#inventory").html("You are not carrying anything");
-          } else {
+          } 
+          else 
+          {
              $("#inventory").html("You are carrying : ");
-             for(var i in data) {
+             for(var i in data) 
+             {
                var item = data[i];
                $("#inventory").append(item);
                button = $("<button/>");
                button.text("Drop " + item);
-                (function(button,where,item) {
-                  button.click(function() {
+                (function(button,where,item) 
+                {
+                  button.click(function() 
+                  {
                     $.ajax("/" + where + "/" + item,
                         { success : refresh, type : "PUT" }
                     );
@@ -90,11 +83,12 @@
             }
           }
         });
+        <!--setTimeout(refresh, 200);-->
       }
-
       refresh();
-
     });
   </script>
   </body>
 </html>
+
+

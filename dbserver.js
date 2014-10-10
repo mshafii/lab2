@@ -1,78 +1,93 @@
 var express = require('express');
 var cookieParser = require('cookie-parser')
+var mysql = require('mysql');
 var app = express();
 var who = [];
-var inventory;
-var myID;
 
 app.use(cookieParser());
 
-	/*var mysql = require('mysql');
-	var connection = mysql.createConnection({
-		  host     : 'mysql.eecs.ku.edu',
-		  user     : 'csoden42',
-		  password : '#1Jayhawk'
-		});
-
-	connection.connect(function(err) {
-  if (err) {
-    console.error('error connecting: ' + err.stack);
-    return;
-  }
-
-  console.log('connected as id ' + connection.threadId);
+console.log('Creating db connection');
+/* Creating connection to mysql database */
+var connection = mysql.createConnection({
+	host     : 'mysql.eecs.ku.edu',
+	user     : 'mshafii',
+	password : 'Mr24shaf'
 });
-	connection.query("use csoden42");
-	connection.query('SELECT 1 + 1 AS solution', function(err, rows, fields) {
-	  if (err) throw err;
 
-	  console.log('The solution is: ', rows[0].solution);
-	});*/
+console.log('Connecting to db');
+/* Connecting to db */
+connection.connect(function(err) {
+	if (err) {
+		console.error('Error connecting to db: ' + err.stack);
+		return;
+	}
+	console.log('Connected to db as id:' + connection.threadId);
+});
 
+/* Set a new cookie for the user's browser to a randomly generated id */
 function setCookie(req, res, next){
-
 	req.userid = req.cookies.userid;
-	console.log("req.userid set");
+	
 	if (!req.userid) {
-		console.log("cookie test");
 		while ( (!req.userid) || (who[req.userid]) ){
 			req.userid = Math.round(Math.random()*1000000);
 		}
-		res.cookie("userid", req.userid);		
-		/*var queryString = 'INSERT INTO EECS_561_Lab4 (`ID`, `Inventory`) VALUES (' + req.userid + ', "")';
-		connection.query(queryString, function (err, rows, fields){
-			if(err) throw err;
-			console.log("New User inserted");
-		});*/
-	}
-	//else throw req.userid;
-	
-	if (!who[req.userid]){
+		res.cookie("userid", req.userid);
+
+		console.log("Adding default state info to new user.");
 		who[req.userid] = {
 			"location": "strong-hall",
 			"inventory": ["laptop"]
 		};
-	}
-	req.who = who[req.userid];
-	inventory = req.who.inventory;
-	var local = req.who.location;
-	/*var updateString = 'UPDATE EECS_561_Lab4 SET `Inventory`= "{(' + inventory + ')}" WHERE ID=' + req.userid;
-	connection.query(updateString, function (err, rows, fields){
+		req.who = who[req.userid];
+		console.log('New User: ' + req.userid);
+		console.log('New Location: ' + req.who.location);
+		console.log('New Inventory: ' + req.who.inventory);
+		
+		/* Create new user in db */
+		var queryString = 'INSERT INTO EECS_581_Lab4 (`ID`, `Inventory`, `Location`) VALUES (' + req.userid + ', ' + req.who.inventory + ', ' + req.who.location + ')';
+		connection.query(queryString, function (err, rows, fields){
 			if(err) throw err;
-			console.log("inventory updated");
+			console.log('New User added to db. User ID: ' + req.userid);
 		});
-		myID = req.userid;*/
-	next();
-	//connection.end();
+		
+	} else {
+		/* If existing user, pull state info from db. */
+		
+		var locale_num = 0;
+		var locale = "";
+		var stuff = "";
+		
+		var selectString = 'SELECT * FROM `EECS_561_Lab4` WHERE `ID` = ' + req.userid;
+		connection.query(selectString, function (err, rows, fields){
+			if(err) throw err;
+			for (var i in rows) {
+				locale_num = rows[i].Location;
+				stuff = rows[i].Inventory
+			}
+		});
+		console.log('Locale_num: ' + locale_num);
+		console.log('Stuff: ' + stuff);
+		locale = campus[locale_num].id;
+		console.log('Locale: ' + locale);
+		
+		req.who = who[req.userid];
+		req.who.inventory = stuff;
+		req.who.location = locale;
+		req.who = who[req.userid];
+		
+		console.log('Returning User: ' + req.userid);
+		console.log('User state: ' + req.who);
+	}
 }
 
-app.use(setCookie);
+//app.use(setCookie);
 
 app.get('/', function(req, res){
-	//inventory = ["laptop"];
-	
+
+	setCookie(req, res);
 	//added terminal print statement to better understand what's going on
-	console.log("Who: ", req.who);
+	console.log("Upon start of web app after visiting setCookie(), Who: ", req.who);
 	
 	res.status(200);
 	res.sendFile(__dirname + "/index.html");
@@ -106,15 +121,15 @@ app.get('/', function(req, res){
 		else counter++;
 	}
 	console.log("update " + counter + " " + req.params.id);
-	 var updateString2 = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
-		connection.query(updateString2, function (err, rows, fields){
-			if(err) throw err;
-			console.log("Update to user with location " + i);
-		});
-		res.set({'Content-Type': 'application/json'});
-		res.status(200);
-		res.send("success");
-		return;
+	var updateString2 = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
+	connection.query(updateString2, function (err, rows, fields){
+		if(err) throw err;
+		console.log("Update to user with location " + i);
+	});
+	res.set({'Content-Type': 'application/json'});
+	res.status(200);
+	res.send("success");
+	return;
 });*/
 
 app.get('/:id', function(req, res){
@@ -141,30 +156,29 @@ app.get('/:id', function(req, res){
 	    res.send(req.who.inventory);
 	    console.log("inventory requested");
 	    return;
-	}
-	else if (req.params.id == "who") {
+	} else if (req.params.id == "who") {
 		res.set({'Content-Type': 'application/json'});
 		res.status(200);
 		res.send(who);
 		console.log("who requested");
 		return;
-	}else{
-	for (var i in campus) {
-		console.log(req.params.id);
-		if (req.params.id == campus[i].id) {
-		   /* var updateString = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
-			console.log("user updated #2 with location " + i);
-		connection.query(updateString, function (err, rows, fields){
-			if(err) throw err;
-		});*/
-		res.set({'Content-Type': 'application/json'});
-		    res.status(200);
-		    res.send(campus[i]);
-		    return;
+	} else {
+		for (var i in campus) {
+			console.log(req.params.id);
+			if (req.params.id == campus[i].id) {
+				//var updateString = 'UPDATE EECS_561_Lab4 SET `Location`= ' + i + ' WHERE `ID` =' + req.cookies.userid;
+				//console.log("user updated #2 with location " + i);
+				//connection.query(updateString, function (err, rows, fields){
+				//	if(err) throw err;
+				//});
+				res.set({'Content-Type': 'application/json'});
+				res.status(200);
+				res.send(campus[i]);
+				return;
+			}
 		}
-	}
-	res.status(404);
-	res.send("not found, sorry");
+		res.status(404);
+		res.send("not found, sorry");
 	}
 });
 
@@ -187,7 +201,6 @@ app.delete('/:id/:item', function(req, res){
 				res.status(200);
 				
 				req.who.inventory.push(campus[i].what[ix]); // stash in specific user's inventory
-				inventory = req.who.inventory;
 		        res.send(req.who.inventory); // respond with specific user's inventory
 				
 				campus[i].what.splice(ix, 1); // room no longer has this
@@ -222,10 +235,11 @@ app.put('/:id/:item/', function(req, res){
 					res.set({'Content-Type': 'application/json'});
 					res.status(200);
 					res.send([]);
-				} else {app.post('/', function(req, res){
-							req.session.userName = req.body.userName;
-							res.redirect('/');
-						});
+				} else {
+					app.post('/', function(req, res){
+						req.session.userName = req.body.userName;
+						res.redirect('/');
+					});
 					res.status(404);
 					res.send("you do not have this");
 				}
@@ -243,7 +257,6 @@ app.listen(3000);
 var dropbox = function(ix,room,req) {
 	var item = req.who.inventory[ix];    // take note of what item to remove is
 	req.who.inventory.splice(ix, 1);	 // remove from specific user's inventory
-	inventory = req.who.inventory;
 	if (room.nid == 'allen-fieldhouse' && item == "basketball") {
 		room.text	+= " Someone found the ball so there is a game going on!"
 		return;
